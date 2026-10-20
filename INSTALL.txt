@@ -1,0 +1,55 @@
+MORE PLAYERS - install guide (Across the Obelisk, Steam, Windows)
+
+Co-op Adventure with more than 4 heroes, and rooms for up to 8 players.
+EXPERIMENTAL: not yet tested with real players. Please send Player.log from
+every player if something goes wrong (see the end of this file).
+
+EVERY player in the room needs all three mods, the same versions:
+- Enemy Scaling: https://github.com/cojoco/ato-enemy-scaling/releases
+- More Heroes:   https://github.com/cojoco/ato-more-heroes/releases
+- More Players:  this zip (https://github.com/cojoco/ato-more-players/releases)
+
+1. Open the game folder.
+   In Steam, right-click "Across the Obelisk" > Manage > Browse local files.
+   You should see AcrossTheObelisk.exe. Keep this window open.
+
+2. Install BepInEx 5 (the mod loader). Skip this if you already use it.
+   - Go to https://github.com/BepInEx/BepInEx/releases
+   - Download the newest 5.4.x file named BepInEx_win_x64_5.4.x.x.zip
+     (NOT version 6, and NOT the x86 file).
+   - Open the zip and copy EVERYTHING inside it into the game folder, next to
+     AcrossTheObelisk.exe. You should end up with a "BepInEx" folder and a
+     "winhttp.dll" file in the game folder.
+
+3. Start the game once, wait for the main menu, then close it.
+   This creates the BepInEx\plugins folder.
+
+4. Copy EnemyScaling.dll, MoreHeroes.dll and MorePlayers.dll into the game
+   folder's BepInEx\plugins folder.
+
+5. Host: open BepInEx\config\com.cojoco.moreheroes.cfg in Notepad (it appears
+   after the first start with the mods) and set HeroCount (4 to 8). Only the
+   host's setting matters. Create a co-op Adventure room; the players list
+   now goes up to 8. The run has HeroCount heroes, and at least one per
+   player slot.
+
+6. Everyone joins, the host presses Launch. If someone is missing a mod or
+   has a different version, the game says who and does not start.
+   In hero selection the host gives each hero box to a player, as usual.
+
+A room with at most 4 players and HeroCount = 4 is a normal game: friends
+without the mods can join it.
+
+Troubleshooting
+- Nothing happens: right-click the DLLs > Properties and tick "Unblock" if it
+  is shown, then OK. Check that antivirus did not remove them.
+- Check BepInEx\LogOutput.log: it should say "More Players 0.1.0 loaded" and
+  "Transpilers: 11/11 applied".
+- To uninstall, delete MorePlayers.dll from BepInEx\plugins.
+
+Reporting problems: send Player.log from EVERY player, right after it happens.
+It is in %USERPROFILE%\AppData\LocalLow\Dreamsite Games\AcrossTheObelisk\
+(paste that into the Explorer address bar).
+
+SAVES: a co-op run with more than 4 heroes needs the mods on every player's
+game to load. Back up your save folder before trying it.
