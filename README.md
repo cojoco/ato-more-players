@@ -1,10 +1,15 @@
 # More Players (experimental)
 
 A BepInEx 5 mod for Across the Obelisk: co-op Adventure with more than 4 heroes, and rooms for up to 8 players.
-It builds on **More Heroes** (which puts up to 8 heroes in a run) and needs it installed.
+It builds on [More Heroes](https://github.com/cojoco/ato-more-heroes) (which puts up to 8 heroes in a run) and needs it installed.
 
 **Status: 0.1.0, built but not yet tested in game.** Everything here was written against the game's code and checked offline;
 nothing has been played with two or more players yet.
+
+## Related mods
+
+- [More Heroes](https://github.com/cojoco/ato-more-heroes): up to 8 heroes in a run. Required by More Players.
+- [Enemy Scaling](https://github.com/cojoco/ato-enemy-scaling): stronger enemies. Required by More Heroes, so also needed here.
 
 ## What it does
 
@@ -18,7 +23,7 @@ nothing has been played with two or more players yet.
 
 ## Requirements
 
-- BepInEx 5.4 (win_x64 on Windows, linux_x64 on Linux), **More Heroes** and **Enemy Scaling** (More Heroes needs it).
+- BepInEx 5.4 (win_x64 on Windows, linux_x64 on Linux), [More Heroes](https://github.com/cojoco/ato-more-heroes) and [Enemy Scaling](https://github.com/cojoco/ato-enemy-scaling) (More Heroes needs it).
 - **Every player** needs More Heroes and More Players, the same versions. When a room has more than 4 player slots or more than
   4 heroes, the host's Launch button refuses to start until every player has the same More Players version, and says who is
   missing it.
