@@ -19,6 +19,7 @@ nothing has been played with two or more players yet.
   every hero, and each player controls their own.
 - **Up to 8 players.** The create-room list offers 5 to 8 players (`[General] MaxPlayers`). The lobby shows a row per player,
   each hero box lists every player, and players 5 to 8 get their own colours.
+- **Faster co-op:** see the separate [Game Speed](https://github.com/cojoco/ato-game-speed) mod; the host's speed applies to every player in the room.
 - A room with at most 4 players and 4 heroes (More Heroes `HeroCount = 4`) is plain vanilla, so friends without the mods can join.
 
 ## Requirements

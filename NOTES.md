@@ -106,6 +106,9 @@ A mod cannot add `[PunRPC]` methods to the game's PhotonViews, and changing an R
   shared loot (host shuffles 0..3, `NET_ShareLootIdAndOrder` sends 4 bytes) stays identical everywhere.
 - Independent loot: `SetLoot` marks heroes owned by others as looted, `i < 4` (#2) -> `Loot.PanelShift` (looted[] length).
 
+### Game speed
+- Moved to its own mod, `GameSpeed/` (room property `gs_speed`), before 0.1.2 was released. MorePlayers has no speed code.
+
 ## Survey: co-op 4s left alone (and why)
 
 | Where | Why |
@@ -140,3 +143,9 @@ A mod cannot add `[PunRPC]` methods to the game's PhotonViews, and changing an R
 - Not verified at all: anything at runtime. In particular: Prefix/Postfix binding (startup summary), Photon event delivery and
   ordering, `PhotonView.RPC` patch target, every layout (lobby rows, name buttons, conflict slots, MoreHeroes' second box row
   next to the co-op widgets Follow / ready button / MasterDescription), and whether other co-op paths not in the survey break.
+
+## 0.1.0 after release (2026-10-20)
+
+- Solo lobby test in game: room sizes 2..8, 8 rows packed at scale 0.51 (`PlaceRows`), startup summary clean. See HANDOFF.
+- `Room.AnnounceSelf`: the host no longer reads its own room properties in OnJoinedRoom (they are not echoed back yet, so the
+  log claimed 4 heroes and no host mod); it logs that it joined its own room as host.

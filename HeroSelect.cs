@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using HarmonyLib;
 using MoreHeroes;
 using Photon.Realtime;
+using TMPro;
+using UnityEngine;
 
 namespace MorePlayers
 {
@@ -112,6 +116,135 @@ namespace MorePlayers
                     Plugin.Log.LogError($"Re-assigning the saved owners of boxes 5+ failed: {e.Message}");
                 }
             }
+        }
+            // The guest-only widgets (Follow the leader toggle, "Press the button when you are ready" + Ready button) sit right under the
+        // single row of boxes in vanilla, where MoreHeroes now puts the second row. Move them into the free strip to the right of the
+        // boxes (co-op boxes end at about x 7.6, the screen at 9.6): Follow next to row 1, Ready next to row 2, texts wrapped to the
+        // strip width. Positions are set once when the screen settles; the game only toggles these widgets on and off afterwards.
+        [HarmonyPatch(typeof(HeroSelectionManager), "SetCharacterSelectionTabCount")]
+        [HarmonyAfter(Plugin.MoreHeroesGuid)]
+        internal static class WidgetsPatch
+        {
+            private static void Postfix(HeroSelectionManager __instance)
+            {
+                if (!Plugin.MoveGuestWidgets.Value || !GameManager.Instance.IsMultiplayer() || BoxShift(0) == 0)
+                {
+                    return;
+                }
+                try
+                {
+                    PlaceWidgets(__instance);
+                }
+                catch (Exception e)
+                {
+                    Plugin.Log.LogError($"Hero selection: moving the Follow/Ready widgets failed: {e}");
+                }
+            }
+        }
+
+        private const float StripGap = 0.25f;
+        private const float ScreenMargin = 0.15f;
+
+        private static void PlaceWidgets(HeroSelectionManager hsm)
+        {
+            Bounds? row1 = SpriteBounds(hsm.boxGO, 0, HeroSlots.VanillaCount);
+            Bounds? row2 = SpriteBounds(hsm.boxGO, HeroSlots.VanillaCount, hsm.boxGO.Length);
+            if (row1 == null || row2 == null)
+            {
+                Plugin.Log.LogWarning("Hero selection: box bounds not found, Follow/Ready widgets left in place.");
+                return;
+            }
+            float boxesRight = Mathf.Max(row1.Value.max.x, row2.Value.max.x);
+            Camera cam = Camera.main;
+            float screenRight = cam != null && cam.orthographic ? cam.transform.position.x + cam.orthographicSize * cam.aspect : 9.6f;
+            float left = boxesRight + StripGap;
+            float right = screenRight - ScreenMargin;
+            float width = right - left;
+            float cx = (left + right) * 0.5f;
+            if (width < 0.8f)
+            {
+                Plugin.Log.LogWarning($"Hero selection: only {width:0.00} free right of the boxes (x {boxesRight:0.00}..{screenRight:0.00}); Follow/Ready widgets left in place.");
+                return;
+            }
+
+            var sb = new StringBuilder($"Hero selection: Follow/Ready widgets moved right of the boxes, strip x {left:0.00}..{right:0.00}.");
+            // Follow: the X box with its label above it, centred on row 1.
+            Transform followBox = hsm.botonFollow != null ? hsm.botonFollow.transform : null;
+            TMP_Text followText = followBox?.parent?.GetComponentsInChildren<TMP_Text>(true).FirstOrDefault(t => !t.transform.IsChildOf(followBox));
+            if (followBox != null)
+            {
+                float y = row1.Value.center.y;
+                followBox.position = new Vector3(cx, y - 0.3f, followBox.position.z);
+                if (followText != null)
+                {
+                    FitText(followText, width, new Vector2(cx, y + 0.35f));
+                }
+                sb.Append($" Follow at ({cx:0.00}, {y - 0.3f:0.00}){(followText == null ? ", label not found" : "")}.");
+            }
+            // Ready: the text above the button, centred on row 2.
+            if (hsm.readyButton != null)
+            {
+                float y = row2.Value.center.y;
+                hsm.readyButton.position = new Vector3(cx, y - 0.35f, hsm.readyButton.position.z);
+                TMP_Text readyText = hsm.readyButtonText != null ? hsm.readyButtonText.GetComponent<TMP_Text>() : null;
+                if (readyText != null)
+                {
+                    FitText(readyText, width, new Vector2(cx, y + 0.4f));
+                }
+                sb.Append($" Ready button at ({cx:0.00}, {y - 0.35f:0.00}){(readyText == null ? ", text not found" : "")}.");
+            }
+            if (hsm.masterDescription != null && hsm.masterDescription is RectTransform md)
+            {
+                var c = new Vector3[4];
+                md.GetWorldCorners(c);
+                sb.Append($" Master description x {c[0].x:0.00}..{c[2].x:0.00}, y {c[0].y:0.00}..{c[2].y:0.00}; boxes end at y {row2.Value.min.y:0.00}.");
+            }
+            Plugin.Log.LogInfo(sb.ToString());
+        }
+
+        // Centre a label at the given world point, wrapped to the strip width (centred lines).
+        private static void FitText(TMP_Text text, float worldWidth, Vector2 center)
+        {
+            RectTransform rt = text.rectTransform;
+            float sx = Mathf.Abs(rt.lossyScale.x);
+            if (sx > 0.0001f)
+            {
+                rt.sizeDelta = new Vector2(worldWidth / sx, rt.sizeDelta.y);
+            }
+            text.enableWordWrapping = true;
+            text.alignment = TextAlignmentOptions.Center;
+            rt.position = new Vector3(center.x, center.y, rt.position.z);
+        }
+
+        // Sprite bounds of boxes [from, to) (TMP bounds are not settled on the screen's first frame, so sprites only).
+        private static Bounds? SpriteBounds(GameObject[] boxes, int from, int to)
+        {
+            Bounds? all = null;
+            for (int i = from; i < Math.Min(to, boxes.Length); i++)
+            {
+                if (boxes[i] == null || !boxes[i].activeInHierarchy)
+                {
+                    continue;
+                }
+                foreach (SpriteRenderer r in boxes[i].GetComponentsInChildren<SpriteRenderer>())
+                {
+                    if (!r.enabled || r.sprite == null)
+                    {
+                        continue;
+                    }
+                    if (all == null)
+                    {
+                        all = r.bounds;
+                    }
+                    else
+                    {
+                        Bounds b = all.Value;
+                        b.Encapsulate(r.bounds);
+                        all = b;
+                    }
+                }
+            }
+            return all;
         }
     }
 }

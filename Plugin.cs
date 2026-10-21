@@ -15,7 +15,7 @@ namespace MorePlayers
     {
         public const string PluginGuid = "com.cojoco.moreplayers";
         public const string PluginName = "More Players";
-        public const string PluginVersion = "0.1.0";
+        public const string PluginVersion = "0.1.2";
         public const string MoreHeroesGuid = "com.cojoco.moreheroes";
 
         internal static ManualLogSource Log;
@@ -24,6 +24,7 @@ namespace MorePlayers
         internal static ConfigEntry<bool> VerboseNet;
         internal static ConfigEntry<float> BoxPlayerScale;
         internal static ConfigEntry<float> BoxPlayerColumnOffset;
+        internal static ConfigEntry<bool> MoveGuestWidgets;
         internal static ConfigEntry<float> ConflictSlotScale;
         internal static ConfigEntry<float> ConflictSlotSpacing;
 
@@ -43,6 +44,9 @@ namespace MorePlayers
             BoxPlayerColumnOffset = Config.Bind("Layout", "BoxPlayerColumnOffset", 0.3f,
                 "Hero selection, rooms with more than 4 players: distance of the two columns of player-name buttons from the box centre, in the " +
                 "box's own units (a box is about 1.2 wide).");
+            MoveGuestWidgets = Config.Bind("Layout", "MoveGuestWidgets", true,
+                "Hero selection with more than 4 heroes: move the guests' Follow the leader toggle and Ready button (vanilla puts them under " +
+                "the boxes, where the second row of boxes now is) to the free space right of the boxes.");
 
             ConflictSlotScale = Config.Bind("Layout", "ConflictSlotScale", 0f,
                 "Conflict screen (co-op players picked different map nodes) with more than 4 heroes: size of each hero's slot (1 = vanilla). 0 = automatic (0.6).");
@@ -61,7 +65,7 @@ namespace MorePlayers
                      {
                          typeof(Room.CreatedRoomPatch), typeof(Room.JoinedRoomPatch), typeof(Room.LaunchPatch), typeof(Net.RpcPatch),
                          typeof(Combat.SaveCardDeckPatch), typeof(Rewards.ShareRewardsPatch), typeof(HeroSelect.OwnerArrayPatch),
-                         typeof(HeroSelect.LoadDataPatch), typeof(HeroSelect.SavedOwnersPatch), typeof(TeamSync.SetHeroPatch),
+                         typeof(HeroSelect.LoadDataPatch), typeof(HeroSelect.SavedOwnersPatch), typeof(HeroSelect.WidgetsPatch), typeof(TeamSync.SetHeroPatch),
                          typeof(TeamSync.ShareGamePatch), typeof(Lobby.AwakePatch), typeof(Lobby.DrawNamesPatch), typeof(Lobby.ColorPatch),
                          typeof(Lobby.BoxAwakePatch), typeof(Lobby.HidePlayersPatch), typeof(Lobby.SelectPlayerPatch), typeof(Lobby.ActivePlayerPatch),
                          typeof(Conflict.AwakePatch), typeof(Conflict.OrderPatch)
