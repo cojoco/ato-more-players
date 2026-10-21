@@ -27,7 +27,7 @@ nothing has been played with two or more players yet.
 - **Every player** needs More Heroes and More Players, the same versions. When a room has more than 4 player slots or more than
   4 heroes, the host's Launch button refuses to start until every player has the same More Players version, and says who is
   missing it.
-- Only the host's `HeroCount` matters; the other players' copies read the room's value.
+- Only the host's `HeroCount` matters; the other players' copies read the room's value (their `HeroCount` and `Enabled` are ignored while in someone else's room, from More Heroes 0.2.25).
 
 ## How to play
 
