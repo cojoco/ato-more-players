@@ -58,7 +58,7 @@ Start small, each step only after the previous works:
 
 - Fix what testing finds.
 - Cosmetic, players 5+: players popup (`AlertManager.playerList`), shuffle-minigame marks (`CardItem.mpMark`).
-- When co-op works: mark the GitHub release as a full release (it is a pre-release), update README status.
+- When co-op works: drop "(experimental)" from the release title, update README status. Releases are never pre-releases (user: friends cannot find them).
 
 ## Tools
 
@@ -75,7 +75,7 @@ Start small, each step only after the previous works:
 
 - Each mod folder is its own git repo; the parent folder is not. Remotes use ssh (https failed: the user's `gh` login is ssh):
   `git@github.com:cojoco/ato-enemy-scaling.git`, `ato-more-heroes.git`, `ato-more-players.git` (branch `main`).
-- Releases (2026-10-20): ato-enemy-scaling v0.1.0, ato-more-heroes v0.2.24, ato-more-players v0.1.0 (pre-release). Each asset is
+- Releases (2026-10-20): ato-enemy-scaling v0.1.0, ato-more-heroes v0.2.24, ato-more-players v0.1.0. 2026-10-21: v0.1.2 as a full release (Latest), with MoreHeroes v0.2.26, EnemyScaling v0.2.1. Each asset is
   `<Mod>-<version>.zip` with `<Mod>.dll` + `INSTALL.txt` (the repo's INSTALL.txt), same as EncounterPicker. Copies in `../dist`.
 - Release recipe: bump `PluginVersion`, build Release with 0 warnings, check `strings -e l <dll> | grep -x <version>`, zip with
   Python `zipfile` (the shell is zsh and has no `zip`; zsh does not word-split `$var`, so loop with Python), commit/push, then
