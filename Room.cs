@@ -27,6 +27,8 @@ namespace MorePlayers
         private const string KeyHeroes = "mp_heroes";
         private const string KeyVersion = "mp_ver";
         private const string KeyMods = "mp_mods";
+        private const string KeyScaleRolls = "mp_rolls";
+        private const string KeyScaleCosts = "mp_costs";
 
         // Mods whose versions must match the host's in a room that needs MorePlayers. Read from BepInEx, so a missing mod is
         // reported instead of failing to load.
@@ -51,6 +53,21 @@ namespace MorePlayers
             return v is int n ? Clamp(n) : HeroSlots.VanillaCount;
         }
 
+        // The host's MoreHeroes [Balance] values (MoreHeroes.MultiplayerApi.RoomScaleGroupRolls / RoomScaleGroupEventCosts); null
+        // outside a room or if the room has no value.
+        internal static bool? ScaleGroupRolls() => RoomBool(KeyScaleRolls);
+        internal static bool? ScaleGroupEventCosts() => RoomBool(KeyScaleCosts);
+
+        private static bool? RoomBool(string key)
+        {
+            if (!InRoom)
+            {
+                return null;
+            }
+            object v = PhotonNetwork.CurrentRoom.CustomProperties?[key];
+            return v is bool b ? b : (bool?)null;
+        }
+
         // Heroes beyond the 4 the game is built for, in the current room.
         internal static int ExtraHeroes => HeroCount() - HeroSlots.VanillaCount;
 
@@ -60,6 +77,13 @@ namespace MorePlayers
         internal static bool NeedsMod()
         {
             return InRoom && (PhotonNetwork.CurrentRoom.MaxPlayers > HeroSlots.VanillaCount || Expanded);
+        }
+
+        // Same rule as MoreHeroes (HeroSlots.ModeAllowsExtraHeroes). The game's IsObeliskChallenge() is also true for weekly runs.
+        private static bool ModeAllowsExtraHeroes()
+        {
+            GameManager gm = GameManager.Instance;
+            return !gm.IsWeeklyChallenge() && (gm.IsGameAdventure() || gm.IsObeliskChallenge() || gm.IsSingularity());
         }
 
         // Called (Postfix on NetworkManager.OnCreatedRoom) on the host only.
@@ -78,9 +102,10 @@ namespace MorePlayers
                 heroes = ato.team.Size;
                 why = "the saved team";
             }
-            else if (!GameManager.Instance.IsGameAdventure() || GameManager.Instance.IsWeeklyChallenge())
+            else if (!ModeAllowsExtraHeroes())
             {
-                // MoreHeroes only adds heroes in Adventure; other modes keep 4 heroes (and so at most 4 players).
+                // MoreHeroes adds heroes in Adventure, Obelisk Challenge and Singularity; the weekly challenge (and anything else)
+                // keeps 4 heroes, and so at most 4 players.
                 heroes = HeroSlots.VanillaCount;
                 why = $"game type {GameManager.Instance.GameType} keeps 4 heroes";
             }
@@ -90,8 +115,13 @@ namespace MorePlayers
                 why = $"MoreHeroes HeroCount {MultiplayerApi.ConfiguredHeroCount}, room for {maxPlayers} players";
             }
             heroes = Clamp(heroes);
-            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { KeyHeroes, heroes }, { KeyVersion, Plugin.PluginVersion } });
-            Plugin.Log.LogInfo($"Co-op room created: {maxPlayers} players, {heroes} heroes ({why}).");
+            bool rolls = MultiplayerApi.ConfiguredScaleGroupRolls;
+            bool costs = MultiplayerApi.ConfiguredScaleGroupEventCosts;
+            PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable
+            {
+                { KeyHeroes, heroes }, { KeyVersion, Plugin.PluginVersion }, { KeyScaleRolls, rolls }, { KeyScaleCosts, costs }
+            });
+            Plugin.Log.LogInfo($"Co-op room created: {maxPlayers} players, {heroes} heroes ({why}); host's ScaleGroupRolls={rolls}, ScaleGroupEventCosts={costs}.");
         }
 
         // Called (Postfix on NetworkManager.OnJoinedRoom) on every player, host included.
@@ -236,7 +266,7 @@ namespace MorePlayers
                     if (PhotonNetwork.PlayerList.Length > HeroCount())
                     {
                         string few = $"{PhotonNetwork.PlayerList.Length} players but only {HeroCount()} heroes: every player needs a hero. " +
-                                     "More than 4 players only works in Adventure mode.";
+                                     "More than 4 players does not work in the weekly challenge.";
                         Plugin.Log.LogWarning("Launch refused: " + few);
                         AlertManager.Instance.AlertConfirm(few);
                         return false;

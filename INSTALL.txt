@@ -1,6 +1,7 @@
 MORE PLAYERS - install guide (Across the Obelisk, Steam, Windows)
 
-Co-op Adventure with more than 4 heroes, and rooms for up to 8 players.
+Co-op Adventure, Obelisk Challenge or Singularity with more than 4 heroes, and
+rooms for up to 8 players.
 EXPERIMENTAL: not yet tested with real players. Please send Player.log from
 every player if something goes wrong (see the end of this file).
 
@@ -29,7 +30,8 @@ EVERY player in the room needs all three mods, the same versions:
 
 5. Host: open BepInEx\config\com.cojoco.moreheroes.cfg in Notepad (it appears
    after the first start with the mods) and set HeroCount (4 to 8). Only the
-   host's setting matters. Create a co-op Adventure room; the players list
+   host's setting matters. Create a co-op Adventure, Obelisk Challenge or
+   Singularity room (not weekly); the players list
    now goes up to 8. The run has HeroCount heroes, and at least one per
    player slot.
 

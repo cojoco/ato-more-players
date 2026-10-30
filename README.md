@@ -1,6 +1,6 @@
 # More Players (experimental)
 
-A BepInEx 5 mod for Across the Obelisk: co-op Adventure with more than 4 heroes, and rooms for up to 8 players.
+A BepInEx 5 mod for Across the Obelisk: co-op Adventure, Obelisk Challenge or Singularity with more than 4 heroes, and rooms for up to 8 players.
 It builds on [More Heroes](https://github.com/cojoco/ato-more-heroes) (which puts up to 8 heroes in a run) and needs it installed.
 
 **Status: 0.1.0, built but not yet tested in game.** Everything here was written against the game's code and checked offline;
@@ -39,7 +39,8 @@ nothing has been played with two or more players yet.
 
 ## Limits
 
-- Adventure mode only. Other modes keep 4 heroes, so they cannot have more than 4 players.
+- Adventure, Obelisk Challenge and Singularity (the last two new in 0.1.4, untested in co-op). The weekly challenge keeps 4
+  heroes, so it cannot have more than 4 players.
 - **Saves:** a co-op save with more than 4 heroes needs both mods on every player's game to load.
 - Not done yet (cosmetic, nothing breaks): the players list behind the chat/players button shows 4 players, and in the card
   shuffle minigame only 4 players' picks are marked on the cards.

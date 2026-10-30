@@ -15,7 +15,7 @@ namespace MorePlayers
     {
         public const string PluginGuid = "com.cojoco.moreplayers";
         public const string PluginName = "More Players";
-        public const string PluginVersion = "0.1.3";
+        public const string PluginVersion = "0.1.5";
         public const string MoreHeroesGuid = "com.cojoco.moreheroes";
 
         internal static ManualLogSource Log;
@@ -55,6 +55,8 @@ namespace MorePlayers
 
             // MoreHeroes asks this for the co-op hero count; without MorePlayers it keeps co-op at 4 heroes.
             MultiplayerApi.RoomHeroCount = Room.HeroCount;
+            MultiplayerApi.RoomScaleGroupRolls = Room.ScaleGroupRolls;
+            MultiplayerApi.RoomScaleGroupEventCosts = Room.ScaleGroupEventCosts;
             Combat.Register();
             Rewards.Register();
 
