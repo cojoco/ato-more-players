@@ -149,3 +149,15 @@ A mod cannot add `[PunRPC]` methods to the game's PhotonViews, and changing an R
 - Solo lobby test in game: room sizes 2..8, 8 rows packed at scale 0.51 (`PlaceRows`), startup summary clean. See HANDOFF.
 - `Room.AnnounceSelf`: the host no longer reads its own room properties in OnJoinedRoom (they are not echoed back yet, so the
   log claimed 4 heroes and no host mod); it logs that it joined its own room as host.
+
+## 0.1.3 (2026-10-30, built, not run in game): Launch also checks MoreHeroes and EnemyScaling versions
+
+- Gap found after EnemyScaling 0.3.0: the Launch check compared only `mp_ver` (MorePlayers). A friend on the old pack
+  (MorePlayers 0.1.2 too) would pass it with EnemyScaling 0.2.1, which reads the host's base multipliers (now 1) but not the new
+  per-hero values: enemy HP x1 for them, x2 for the host at 8 heroes -> desync.
+- Change (`Room.cs`): every player also publishes player property `mp_mods` = "MoreHeroes=<v>;EnemyScaling=<v>" ("none" when not
+  loaded), read from `Chainloader.PluginInfos` by GUID, so a missing mod is reported rather than breaking MorePlayers. The
+  host's Launch check (`PlayersWithoutMod`) compares it with its own after the MorePlayers version matches and names the
+  difference ("Bob (EnemyScaling 0.2.1, host has 0.3.0)"). Players on MorePlayers 0.1.2 publish no `mp_mods`, but they
+  already fail the MorePlayers version check. Join and Launch log lines now list the mod versions.
+- Verified offline: build clean, ilcheck 11/11. Guessed: the multi-client behaviour (needs two players).

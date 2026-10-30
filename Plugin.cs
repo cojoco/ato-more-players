@@ -15,7 +15,7 @@ namespace MorePlayers
     {
         public const string PluginGuid = "com.cojoco.moreplayers";
         public const string PluginName = "More Players";
-        public const string PluginVersion = "0.1.2";
+        public const string PluginVersion = "0.1.3";
         public const string MoreHeroesGuid = "com.cojoco.moreheroes";
 
         internal static ManualLogSource Log;

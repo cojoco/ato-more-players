@@ -25,9 +25,9 @@ nothing has been played with two or more players yet.
 ## Requirements
 
 - BepInEx 5.4 (win_x64 on Windows, linux_x64 on Linux), [More Heroes](https://github.com/cojoco/ato-more-heroes) and [Enemy Scaling](https://github.com/cojoco/ato-enemy-scaling) (More Heroes needs it).
-- **Every player** needs More Heroes and More Players, the same versions. When a room has more than 4 player slots or more than
-  4 heroes, the host's Launch button refuses to start until every player has the same More Players version, and says who is
-  missing it.
+- **Every player** needs Enemy Scaling, More Heroes and More Players, the same versions. When a room has more than 4 player
+  slots or more than 4 heroes, the host's Launch button refuses to start until every player has the host's versions of all
+  three mods, and says who is missing or has a different version (from More Players 0.1.3; 0.1.2 only compared More Players).
 - Only the host's `HeroCount` matters; the other players' copies read the room's value (their `HeroCount` and `Enabled` are ignored while in someone else's room, from More Heroes 0.2.25).
 
 ## How to play

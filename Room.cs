@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BepInEx;
+using BepInEx.Bootstrap;
 using ExitGames.Client.Photon;
 using HarmonyLib;
 using MoreHeroes;
@@ -14,6 +16,9 @@ namespace MorePlayers
     // - room "mp_heroes": the run's hero count (4..8), set by the host when the room is created: the host's MoreHeroes HeroCount,
     //   at least the room size (every player must own a hero), or the saved team's size when loading a co-op save.
     // - room "mp_ver" and player "mp_ver": the MorePlayers version of the host and of each player.
+    // - player "mp_mods": each player's MoreHeroes and EnemyScaling versions ("MoreHeroes=0.2.27;EnemyScaling=0.3.0"). They change
+    //   the run and enemy stats, and every client simulates combat itself, so a different version desyncs even when MorePlayers
+    //   matches (EnemyScaling 0.3.0's per-hero values are unknown to 0.2.x).
     // A room with more than 4 players or more than 4 heroes needs MorePlayers (and MoreHeroes) on every player's game; the host's
     // Launch button refuses to start until every player has the same version. A room with at most 4 players and 4 heroes is
     // vanilla, so players without the mods can still play in it.
@@ -21,6 +26,15 @@ namespace MorePlayers
     {
         private const string KeyHeroes = "mp_heroes";
         private const string KeyVersion = "mp_ver";
+        private const string KeyMods = "mp_mods";
+
+        // Mods whose versions must match the host's in a room that needs MorePlayers. Read from BepInEx, so a missing mod is
+        // reported instead of failing to load.
+        private static readonly (string Guid, string Name)[] CheckedMods =
+        {
+            (Plugin.MoreHeroesGuid, "MoreHeroes"),
+            ("com.cojoco.enemyscaling", "EnemyScaling"),
+        };
 
         internal static bool InRoom => PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom != null;
 
@@ -87,32 +101,85 @@ namespace MorePlayers
             {
                 return;
             }
-            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { KeyVersion, Plugin.PluginVersion } });
+            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { KeyVersion, Plugin.PluginVersion }, { KeyMods, ModVersions() } });
             if (PhotonNetwork.IsMasterClient)
             {
                 // The host's own room properties are not echoed back yet at this point; OnCreatedRoom logged what it published.
-                Plugin.Log.LogInfo($"Joined own co-op room {PhotonNetwork.CurrentRoom.Name} as host.");
+                Plugin.Log.LogInfo($"Joined own co-op room {PhotonNetwork.CurrentRoom.Name} as host ({DescribeMods(ModVersions())}).");
                 return;
             }
             object host = PhotonNetwork.CurrentRoom.CustomProperties?[KeyVersion];
             Plugin.Log.LogInfo($"Joined co-op room {PhotonNetwork.CurrentRoom.Name}: {PhotonNetwork.CurrentRoom.MaxPlayers} players, " +
-                               $"{HeroCount()} heroes, host's MorePlayers {(host == null ? "missing (vanilla room)" : host)}.");
+                               $"{HeroCount()} heroes, host's MorePlayers {(host == null ? "missing (vanilla room)" : host)}; mine: {DescribeMods(ModVersions())}.");
         }
 
-        // Players in the room whose MorePlayers version differs from ours (or who have none).
+        // Players in the room whose MorePlayers, MoreHeroes or EnemyScaling version differs from ours (or who have none).
         internal static List<string> PlayersWithoutMod()
         {
             var missing = new List<string>();
             foreach (Player p in PhotonNetwork.PlayerList)
             {
+                string name = NetworkManager.Instance != null ? NetworkManager.Instance.GetPlayerNickReal(p.NickName) : p.NickName;
                 object v = p.CustomProperties?[KeyVersion];
                 if (!(v is string s) || s != Plugin.PluginVersion)
                 {
-                    string name = NetworkManager.Instance != null ? NetworkManager.Instance.GetPlayerNickReal(p.NickName) : p.NickName;
                     missing.Add(v == null ? $"{name} (no MorePlayers)" : $"{name} (MorePlayers {v})");
+                    continue;
+                }
+                string diff = ModDifferences(p.CustomProperties?[KeyMods] as string);
+                if (diff != null)
+                {
+                    missing.Add($"{name} ({diff})");
                 }
             }
             return missing;
+        }
+
+        // This game's checked mod versions, e.g. "MoreHeroes=0.2.27;EnemyScaling=0.3.0" ("none" for a mod that is not loaded).
+        internal static string ModVersions()
+        {
+            return string.Join(";", CheckedMods.Select(m =>
+                m.Name + "=" + (Chainloader.PluginInfos.TryGetValue(m.Guid, out PluginInfo info) ? info.Metadata.Version.ToString() : "none")));
+        }
+
+        private static Dictionary<string, string> ParseMods(string mods)
+        {
+            var d = new Dictionary<string, string>();
+            foreach (string part in (mods ?? "").Split(';'))
+            {
+                int eq = part.IndexOf('=');
+                if (eq > 0)
+                {
+                    d[part.Substring(0, eq)] = part.Substring(eq + 1);
+                }
+            }
+            return d;
+        }
+
+        // "MoreHeroes 0.2.27, EnemyScaling 0.3.0"
+        internal static string DescribeMods(string mods)
+        {
+            return string.Join(", ", ParseMods(mods).Select(kv => kv.Value == "none" ? $"no {kv.Key}" : $"{kv.Key} {kv.Value}"));
+        }
+
+        // What differs between another player's mods and ours, e.g. "EnemyScaling 0.2.1, host has 0.3.0"; null when they match.
+        private static string ModDifferences(string theirs)
+        {
+            Dictionary<string, string> mine = ParseMods(ModVersions());
+            Dictionary<string, string> other = ParseMods(theirs);
+            var diffs = new List<string>();
+            foreach (KeyValuePair<string, string> kv in mine)
+            {
+                if (!other.TryGetValue(kv.Key, out string v))
+                {
+                    diffs.Add($"{kv.Key} version unknown");
+                }
+                else if (v != kv.Value)
+                {
+                    diffs.Add($"{(v == "none" ? $"no {kv.Key}" : $"{kv.Key} {v}")}, host has {kv.Value}");
+                }
+            }
+            return diffs.Count == 0 ? null : string.Join("; ", diffs);
         }
 
         private static int Clamp(int n)
@@ -177,11 +244,11 @@ namespace MorePlayers
                     List<string> missing = PlayersWithoutMod();
                     if (missing.Count == 0)
                     {
-                        Plugin.Log.LogInfo($"Launch: every player has MorePlayers {Plugin.PluginVersion}; {PhotonNetwork.PlayerList.Length} players, {HeroCount()} heroes.");
+                        Plugin.Log.LogInfo($"Launch: every player has MorePlayers {Plugin.PluginVersion}, {DescribeMods(ModVersions())}; {PhotonNetwork.PlayerList.Length} players, {HeroCount()} heroes.");
                         return true;
                     }
                     string text = $"This room has {PhotonNetwork.CurrentRoom.MaxPlayers} player slots and {HeroCount()} heroes, so every player needs " +
-                                  $"MoreHeroes and MorePlayers {Plugin.PluginVersion}. Missing or different: {string.Join(", ", missing)}.";
+                                  $"the host's versions: MorePlayers {Plugin.PluginVersion}, {DescribeMods(ModVersions())}. Missing or different: {string.Join(", ", missing)}.";
                     Plugin.Log.LogWarning("Launch refused: " + text);
                     AlertManager.Instance.AlertConfirm(text);
                     return false;
